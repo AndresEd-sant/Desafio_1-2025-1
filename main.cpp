@@ -43,19 +43,22 @@ int main()
     unsigned int *maskingData = loadSeedMasking("M2.txt", seed, n_pixels);
 
 
+    cout << endl<<"Numeros en el txt "<<endl;
+    for(int i= 0;i<n_pixels;i+=3){
+         cout << maskingData[ i]  <<" ";     // Canal rojo
+         cout << maskingData[ i + 1]  <<" "; // Canal verde
+         cout << maskingData[ i + 2]  <<endl; // Canal azul
+    }
 
-    //for(int i= 0;i<n_pixels;i++){
-    //     cout << pixelData[seed + i] - '0' <<" ";     // Canal rojo
-    //     cout << pixelData[seed + i + 1] - '0' <<" "; // Canal verde
-    //     cout << pixelData[seed + i + 2] - '0' <<endl; // Canal azul
-    //}
+
+
     unsigned int seed_temp = seed;
 
     cout << "Dezplazamiento a la izquierda de  bits"<<endl;
     for(unsigned short int i= 1;i<9;i++)
     {
         cout << "mov de "<< i <<" bits"<<endl;
-        for(unsigned short int m= 0;m<n_pixels;m++)
+        for(unsigned short int m= 0;m<n_pixels;m+=3)
         {
         short int val = pixelData[seed_temp+m ] - '0';
         cout << Dezplazamiento_bits_izq(val,i) <<" ";
@@ -63,6 +66,8 @@ int main()
         cout << Dezplazamiento_bits_izq(val2,i) <<" ";
         short int val3 = pixelData[seed_temp+m+2 ] - '0';
         cout << Dezplazamiento_bits_izq(val3,i) <<endl;
+
+
 
 
         seed_temp = seed_temp + 3;
@@ -74,7 +79,7 @@ int main()
     for(unsigned short int i= 1;i<9;i++)
     {
         cout << "mov de "<< i <<" bits"<<endl;
-        for(unsigned short int m= 0;m<n_pixels;m++)
+        for(unsigned short int m= 0;m<n_pixels;m+=3)
         {
             short int val = pixelData[seed_temp+m ] - '0';
             cout << Dezplazamiento_bits_der(val,i) <<" ";
@@ -107,6 +112,27 @@ int main()
     // Libera la memoria usada para los píxeles de la imagen
     delete[] pixelData;
     pixelData = nullptr;
+
+    int height2 = 0;
+    int width2 = 0;
+
+
+
+    // Extraccion de pixeles de la mascara para usarse en el enmascaramiento
+
+    QString archivoEntrada2 = "M.bmp";
+
+    unsigned char *pixelmascara = loadPixels(archivoEntrada2, width2, height2);
+    cout<<endl << "el tamano de la imagen es: "<<height2<<"x"<<width2<<endl;
+
+    for (int i = 0; i < width2 * height2 * 3; i += 3) {
+             cout << pixelmascara[i] - '0' <<" ";     // Canal rojo
+             cout << pixelmascara[i + 1] - '0' <<" "; // Canal verde
+             cout << pixelmascara[i + 2] - '0' <<endl; // Canal azul
+         }
+
+    delete[] pixelmascara;
+    pixelmascara = nullptr;
 
     return 0; // Fin del programa
 }
