@@ -178,3 +178,6 @@ unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixel
     // Retornar el puntero al arreglo con los datos RGB
     return RGB;
 }
+
+
+

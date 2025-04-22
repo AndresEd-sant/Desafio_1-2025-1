@@ -1,4 +1,3 @@
-
 #include <QCoreApplication>
 #include <QImage>
 #include <QDebug>
@@ -7,149 +6,62 @@
 
 using namespace std;
 
-short int Dezplazamiento_bits_izq(short int numero,short unsigned int bit);
-short int Dezplazamiento_bits_der(short int numero,short unsigned int bit);
+// Funciones mejoradas
+uint8_t desplazarBitsIzq(uint8_t valor, int bits);
+uint8_t desplazarBitsDer(uint8_t valor, int bits);
 
-int main()
-{
-    // Definición de rutas de archivo de entrada (imagen Dañada)
+int main() {
     QString archivoEntrada = "I_D.bmp";
 
-    // Variables para almacenar las dimensiones de la imagen
-     int height = 0;
-     int width = 0;
-
-    // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
+    int width = 0, height = 0;
     unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
 
-    cout << "el tamano de la imagen es: "<<height<<"x"<<width<<endl;
+    cout << "Tamaño de la imagen: " << height << "x" << width << endl;
 
-    // Muestreo de pixeles de la imagen dañada convertidos a numeros
-
-   // for (int i = 0; i < width * height * 3; i += 3) {
-   //     cout << pixelData[i] - '0' <<" ";     // Canal rojo
-   //     cout << pixelData[i + 1] - '0' <<" "; // Canal verde
-   //     cout << pixelData[i + 2] - '0' <<endl; // Canal azul
-   // }
-   // for (int i = 0; i < 4; i ++) {
-   //     cout << "" <<endl;
-   // }
-
-    // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
+    // Semilla y datos de enmascaramiento
     int seed = 0;
     int n_pixels = 0;
-
-    // Carga de los datos de enmascaramiento de un archivo .txt (semilla + valores RGB)
     unsigned int *maskingData = loadSeedMasking("M2.txt", seed, n_pixels);
 
-
-    cout << endl<<"Numeros en el txt "<<endl;
-    for(int i= 0;i<n_pixels;i+=3){
-         cout << maskingData[ i]  <<" ";     // Canal rojo
-         cout << maskingData[ i + 1]  <<" "; // Canal verde
-         cout << maskingData[ i + 2]  <<endl; // Canal azul
+    cout << "\nContenido del archivo M2.txt:\n";
+    for (int i = 0; i < n_pixels * 3; i += 3) {
+        cout << maskingData[i] << " "
+             << maskingData[i + 1] << " "
+             << maskingData[i + 2] << endl;
     }
 
-
-
-    unsigned int seed_temp = seed;
-
-    cout << "Dezplazamiento a la izquierda de  bits"<<endl;
-    for(unsigned short int i= 1;i<9;i++)
-    {
-        cout << "mov de "<< i <<" bits"<<endl;
-        for(unsigned short int m= 0;m<n_pixels;m+=3)
-        {
-        short int val = pixelData[seed_temp+m ] - '0';
-        cout << Dezplazamiento_bits_izq(val,i) <<" ";
-        short int val2 = pixelData[seed_temp+m+1 ] - '0';
-        cout << Dezplazamiento_bits_izq(val2,i) <<" ";
-        short int val3 = pixelData[seed_temp+m+2 ] - '0';
-        cout << Dezplazamiento_bits_izq(val3,i) <<endl;
-
-
-
-
-        seed_temp = seed_temp + 3;
+    // Prueba de desplazamiento
+    cout << "\n[Prueba desplazamiento a la izquierda]\n";
+    for (int bits = 1; bits <= 8; ++bits) {
+        cout << "- " << bits << " bits: ";
+        for (int i = 0; i < n_pixels; ++i) {
+            uint8_t val = pixelData[seed + i];
+            cout << int(desplazarBitsIzq(val, bits)) << " ";
         }
-        seed_temp = seed;
+        cout << endl;
     }
 
-    cout<<endl << "Dezplazamiento a la derecha de  bits"<<endl;
-    for(unsigned short int i= 1;i<9;i++)
-    {
-        cout << "mov de "<< i <<" bits"<<endl;
-        for(unsigned short int m= 0;m<n_pixels;m+=3)
-        {
-            short int val = pixelData[seed_temp+m ] - '0';
-            cout << Dezplazamiento_bits_der(val,i) <<" ";
-            short int val2 = pixelData[seed_temp+m+1 ] - '0';
-            cout << Dezplazamiento_bits_der(val2,i) <<" ";
-            short int val3 = pixelData[seed_temp+m+2 ] - '0';
-            cout << Dezplazamiento_bits_der(val3,i) <<endl;
-
-
-            seed_temp = seed_temp + 3;
+    cout << "\n[Prueba desplazamiento a la derecha]\n";
+    for (int bits = 1; bits <= 8; ++bits) {
+        cout << "- " << bits << " bits: ";
+        for (int i = 0; i < n_pixels; ++i) {
+            uint8_t val = pixelData[seed + i];
+            cout << int(desplazarBitsDer(val, bits)) << " ";
         }
-        seed_temp = seed;
+        cout << endl;
     }
 
-
-    // Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
-    //for (int i = 0; i < n_pixels * 3; i += 3) {
-    //    cout << "Pixel " << i / 3 << ": ("
-    //         << maskingData[i] << ", "
-    //         << maskingData[i + 1] << ", "
-    //         << maskingData[i + 2] << ")" << endl;
-    //}
-
-    // Libera la memoria usada para los datos de enmascaramiento
-    if (maskingData != nullptr){
-        delete[] maskingData;
-        maskingData = nullptr;
-    }
-
-    // Libera la memoria usada para los píxeles de la imagen
     delete[] pixelData;
-    pixelData = nullptr;
+    delete[] maskingData;
 
-    int height2 = 0;
-    int width2 = 0;
-
-
-
-    // Extraccion de pixeles de la mascara para usarse en el enmascaramiento
-
-    QString archivoEntrada2 = "M.bmp";
-
-    unsigned char *pixelmascara = loadPixels(archivoEntrada2, width2, height2);
-    cout<<endl << "el tamano de la imagen es: "<<height2<<"x"<<width2<<endl;
-
-    for (int i = 0; i < width2 * height2 * 3; i += 3) {
-             cout << pixelmascara[i] - '0' <<" ";     // Canal rojo
-             cout << pixelmascara[i + 1] - '0' <<" "; // Canal verde
-             cout << pixelmascara[i + 2] - '0' <<endl; // Canal azul
-         }
-
-    delete[] pixelmascara;
-    pixelmascara = nullptr;
-
-    return 0; // Fin del programa
+    return 0;
 }
 
-
-short int Dezplazamiento_bits_izq(short int numero,short unsigned int bit){
-
-   short int transformado = numero >> bit;
-
-    return transformado;
+uint8_t desplazarBitsIzq(uint8_t valor, int bits) {
+    return (valor << bits) & 0xFF;
 }
 
-short int Dezplazamiento_bits_der(short int numero,short unsigned int bit){
-
-    short int transformado  = numero << bit;
-
-    return transformado;
+uint8_t desplazarBitsDer(uint8_t valor, int bits) {
+    return (valor >> bits);
 }
-
 
