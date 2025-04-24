@@ -70,10 +70,12 @@ int main() {
 
         bool encontrado = false;
 
-        for (int modo = 1; modo < 2; ++modo) {
-            for (int bits = 1; bits <= 8; ++bits) {
+        for (int modo = 1; modo <= 5; ++modo) {
+            // Tranformacion de Desplazamiento de 1 hasta 8 bits
+            for (unsigned short int bits = 1; bits <= 8; ++bits) {
 
                 if (modo == 1){
+                    cout<<endl<<"APlicacion de Dezplazamiento de " <<bits << " bits a la izquierda: "<<endl;
                     if (verificarTransformacionIzq(
                         pixelData, mascaraData, maskingData,
                             seed, tamanioMascara, bits))
@@ -85,10 +87,12 @@ int main() {
                         encontrado = true;
                         break;
                     }
+
                 }
 
 
                 if (modo == 2){
+                    cout<<endl<<"APlicacion de Dezplazamiento de " <<bits << "  bits a la izquierda: "<<endl;
                     if (verificarTransformacionDer(
                             pixelData, mascaraData, maskingData,
                             seed, tamanioMascara, bits))
@@ -100,13 +104,30 @@ int main() {
                         break;
                     }
 
-
-
-
                 }
-
             }
-            if (encontrado) break;
+            //Transformacion de XoR
+            if (modo == 3){
+                cout<<endl<<"APlicacion de XoR: "<<endl;
+            }
+
+            //Transformacion de Rotacion a la izquierda
+            if (modo == 4){
+                cout<<endl<<"APlicacion de rotacion a la izquierda: "<<endl;
+            }
+
+            //Transformacion de Rotacion a la Derecha
+            if (modo == 5){
+                cout<<endl<<"APlicacion de rotacion a la izquierda: "<<endl;
+            }
+
+            if (encontrado) {
+                delete[] maskingData;
+                maskingData = nullptr;
+                delete[] pixelData;
+                pixelData = nullptr;
+                break;
+            }
         }
 
         if (!encontrado)
@@ -140,6 +161,17 @@ uint8_t desplazarBitsDer(uint8_t valor, int bits) {
     return (valor >> bits);
 }
 
+uint8_t Xor(uint8_t pixel1, int pixel2) {
+
+}
+
+uint8_t RotacionBitsIzq(uint8_t valor) {
+
+}
+
+uint8_t RotacionBitsDer(uint8_t valor, int bits) {
+
+}
 // ---------------------- FUNCIONES AUXILIARES ----------------------
 
 bool verificarTransformacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
@@ -174,6 +206,17 @@ bool verificarTransformacionDer(unsigned char* pixelData, unsigned char* mascara
     return true;
 }
 
+bool verificarXoR(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
+                                int seed, int size, int argumento) {
+}
+
+bool verificarRotacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
+                  int seed, int size, int argumento) {
+}
+
+bool verificarRotacionDer(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
+                          int seed, int size, int argumento) {
+}
 
 void aplicarTransformacion(unsigned char* pixelData, int seed, int size, int argumento) {
 
