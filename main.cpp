@@ -19,9 +19,10 @@ bool verificarTransformacionIzq(unsigned char* pixelData, unsigned char* mascara
 bool verificarTransformacionDer(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
                                 int seed, int size,  int argumento);
 
+uint8_t Xor(uint8_t pixel1, uint8_t pixel2);
 
-void aplicarTransformacion(unsigned char* pixelData, int seed, int size, int argumento);
 
+void aplicarTransformacion(unsigned char* pixelData,unsigned short int modo,unsigned short int bits =0,unsigned int tamanio_im = 0 );
 QString nombreArchivoPaso(int paso);
 
 
@@ -124,8 +125,6 @@ int main() {
             if (encontrado) {
                 delete[] maskingData;
                 maskingData = nullptr;
-                delete[] pixelData;
-                pixelData = nullptr;
                 break;
             }
         }
@@ -135,6 +134,8 @@ int main() {
 
         delete[] maskingData;
     }
+    delete[] pixelData;
+    delete[] mascaraData;
 
     cout << "\nTransformaciones aplicadas (orden inverso):" << endl;
     for (int i = 0; i < totalTransformaciones; ++i) {
@@ -143,8 +144,7 @@ int main() {
     }
     free(transformaciones);
 
-    delete[] pixelData;
-    delete[] mascaraData;
+
 
     return 0;
 }
@@ -161,27 +161,27 @@ uint8_t desplazarBitsDer(uint8_t valor, int bits) {
     return (valor >> bits);
 }
 
-uint8_t Xor(uint8_t pixel1, int pixel2) {
-
+uint8_t Xor(uint8_t pixel1, uint8_t pixel2){
+    return (pixel1 ^ pixel2);
 }
 
 uint8_t RotacionBitsIzq(uint8_t valor) {
 
 }
 
-uint8_t RotacionBitsDer(uint8_t valor, int bits) {
+uint8_t RotacionBitsDer(uint8_t valor) {
 
 }
 // ---------------------- FUNCIONES AUXILIARES ----------------------
 
 bool verificarTransformacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                                int seed, int size, int argumento) {
+                                int seed, int size, int bits) {
     for (int i = 0; i < size; ++i) {
-        int idx = seed + i;
+        unsigned int identificador = seed + i;
         //if (idx >= totalImageSize) return false;
 
-        uint8_t original = pixelData[idx];
-        uint8_t transformado = desplazarBitsIzq(original, argumento);
+        uint8_t original = pixelData[identificador];
+        uint8_t transformado = desplazarBitsIzq(original, bits);
         uint8_t enmascarado = (transformado + mascara[i]) & 0xFF;
         cout<<endl<<enmascarado-'0' << " "<< referencia[i]<<endl;
 
@@ -194,8 +194,6 @@ bool verificarTransformacionDer(unsigned char* pixelData, unsigned char* mascara
                                 int seed, int size, int argumento) {
     for (int i = 0; i < size; ++i) {
         int idx = seed + i;
-        //if (idx >= totalImageSize) return false;
-
         uint8_t original = pixelData[idx];
         uint8_t transformado = desplazarBitsDer(original, argumento);
         uint8_t enmascarado = (transformado + mascara[i]) & 0xFF;
@@ -218,11 +216,54 @@ bool verificarRotacionDer(unsigned char* pixelData, unsigned char* mascara, unsi
                           int seed, int size, int argumento) {
 }
 
-void aplicarTransformacion(unsigned char* pixelData, int seed, int size, int argumento) {
+void aplicarTransformacion(unsigned char* pixelData,unsigned short int modo,unsigned short int bits,unsigned int tamanio_im,
+                           unsigned char* pixeldata2 ) {
+
+    if (modo == 1){
+        for (unsigned int i = 0; i < tamanio_im; ++i) {
+            uint8_t original = pixelData[i];
+            uint8_t transformado =  desplazarBitsIzq(original, bits);
+            pixelData[i] = transformado;
+        }
+
+    }
+    if (modo == 2){
+        for (unsigned int i = 0; i < tamanio_im; ++i) {
+            uint8_t original = pixelData[i];
+            uint8_t transformado =  desplazarBitsDer(original, bits);
+            pixelData[i] = transformado;
+        }
+    }
+    if (modo == 3){
+        for (unsigned int i = 0; i < tamanio_im; ++i) {
+            uint8_t Im_original = pixelData[i];
+            uint8_t Im_mascara = pixeldata2[i];
+            uint8_t transformado =  Xor(Im_original,Im_mascara );
+            pixelData[i] = transformado;
+        }
+    }
+    if (modo == 4){
+        for (unsigned int i = 0; i < tamanio_im; ++i) {
+            uint8_t original = pixelData[i];
+            uint8_t transformado =  RotacionBitsIzq(original);
+            pixelData[i] = transformado;
+        }
+    }
+    if (modo == 5){
+        for (unsigned int i = 0; i < tamanio_im; ++i) {
+            uint8_t original = pixelData[i];
+            uint8_t transformado =  RotacionBitsDer(original);
+            pixelData[i] = transformado;
+        }
+    }
+
 
 }
 
-void registrarTransformacion(const char* nombre) {
+void registrarTransformacion(unsigned char* transformaciones, char nombre) {
+    int tamanio_tran = sizeof(transformaciones);
+
+
 
 }
 
