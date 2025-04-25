@@ -6,37 +6,18 @@
 #include <iostream>
 #include <cstring>
 #include "funciones_imagen.h"
+#include "funciones_de_transformacion.h"
+#include "funciones_de_verificacion.h"
 
 using namespace std;
 
-unsigned int desplazarBitsIzq(unsigned int valor, int bits);
 
-unsigned int desplazarBitsDer(unsigned int valor, int bits);
 
-unsigned int Xor(unsigned int pixel1, unsigned int pixel2);
-
-uint8_t RotacionBitsIzq(uint8_t valor, int bits);
-
-uint8_t RotacionBitsDer(uint8_t valor, int bits);
-
-QString nombreArchivoPaso(int paso);
-
-bool verificarTransformacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                                int seed, int size, int bits);
-bool verificarTransformacionDer(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                                int seed, int size, int bits);
-bool verificarXoR(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                  int seed, int size, unsigned char* pixelData2);
-bool verificarRotacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                          int seed, int size, int bits);
-bool verificarRotacionDer(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                          int seed, int size, int bits);
 void aplicarTransformacion(unsigned char* pixelData, unsigned short int modo,
                            unsigned short int bits, unsigned int tamanio_im,
                            unsigned char* pixeldata2 = nullptr);
 
 QString nombreArchivoPaso(int paso);
-
 
 
 // ---------------------- MAIN ----------------------
@@ -57,8 +38,10 @@ int main() {
     int pasos = 0;
     cout << "Ingrese el numero total de archivos Mx.txt: ";
     cin >> pasos;
+    unsigned short int pasosrec =1;
 
     for (int paso = pasos; paso >= 0; --paso) {
+
         QString archivoPaso = nombreArchivoPaso(paso);
         if (!QFile::exists(archivoPaso)) {
             cout << "Archivo no encontrado: " << archivoPaso.toStdString() << endl;
@@ -73,11 +56,13 @@ int main() {
 
         for (int bits = 1; bits <= 8 && !encontrado; ++bits) {
             if (verificarTransformacionIzq(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits)) {
-                cout << "Transformacion encontrada : desplazamiento izquierda " << bits << " bits\n";
+                cout <<"Paso "<<pasosrec <<" :" <<"desplazamiento a la izquierda de "<< bits <<"bits\n";
+                pasosrec++;
                 aplicarTransformacion(pixelData, 1, bits, DimensionImagen);
                 encontrado = true;
             } else if (verificarTransformacionDer(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits)) {
-                cout << "Transformacion encontrada : desplazamiento derecha " << bits << " bits\n";
+                cout <<"Paso "<<pasosrec <<" :" <<"desplazamiento a la derecha de "<< bits <<"bits\n";
+                pasosrec++;
                 aplicarTransformacion(pixelData, 2, bits, DimensionImagen);
                 encontrado = true;
             }
@@ -87,7 +72,8 @@ int main() {
             int w2 = 0, h2 = 0;
             unsigned char* pixelData_I_M = loadPixels("I_M.bmp", w2, h2);
             if (verificarXoR(pixelData, mascaraData, maskingData, seed, tamanioMascara, pixelData_I_M)) {
-                cout << " Transformacion encontrada : XOR con I_M.bmp\n";
+                cout <<"Paso "<<pasosrec <<" :" <<" XOR con I_M.bmp\n";
+                pasosrec++;
                 aplicarTransformacion(pixelData, 3, 0, DimensionImagen, pixelData_I_M);
                 encontrado = true;
             }
@@ -97,13 +83,15 @@ int main() {
 
             for (int bits = 1; bits <= 8 && !encontrado; ++bits) {
                 if (verificarRotacionIzq(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits)) {
-                    cout << "Transformacion encontrada : rotacion a la derecha de " << bits << " bits\n";
+                    cout <<"Paso "<<pasosrec <<" :" <<" rotacion a la izquierda de " << bits << " bits\n";
+                    pasosrec++;
                     aplicarTransformacion(pixelData, 4, bits, DimensionImagen);
                     encontrado = true;
                 }
 
                 else if (verificarRotacionDer(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits)) {
-                    cout << "Transformacion encontrada : rotacion a la derecha de " << bits << " bits\n";
+                    cout <<"Paso "<<pasosrec <<" :" <<" rotacion a la derecha de " << bits << " bits\n";
+                    pasosrec++;
                     aplicarTransformacion(pixelData, 5, bits, DimensionImagen);
                     encontrado = true;
                 }
@@ -117,6 +105,8 @@ int main() {
         delete[] maskingData;
     }
 
+    exportImage(pixelData,width_img,height_img,"Imagen_Arreglada.bmp");
+
     delete[] pixelData;
     delete[] mascaraData;
 
@@ -125,82 +115,6 @@ int main() {
     return 0;
 }
 
-
-
-// ---------------------- FUNCIONES DE TRANSFORMACION ----------------------
-
-
-unsigned int desplazarBitsIzq(unsigned int valor, int bits) {
-    return (valor << bits) & 0xFF;
-}
-
-unsigned int desplazarBitsDer(unsigned int valor, int bits) {
-    return (valor >> bits);
-}
-
-unsigned int Xor(unsigned int pixel1, unsigned int pixel2) {
-    return pixel1 ^ pixel2;
-}
-
-uint8_t RotacionBitsIzq(uint8_t valor, int bits) {
-    return ((valor << bits) | (valor >> (8 - bits))) & 0xFF;
-}
-
-uint8_t RotacionBitsDer(uint8_t valor, int bits) {
-    return ((valor >> bits) | (valor << (8 - bits))) & 0xFF;
-}
-// ---------------------- FUNCIONES DE VERIFICACION ----------------------
-
-bool verificarTransformacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                                int seed, int size, int bits) {
-    for (int i = 0; i < size; ++i) {
-        unsigned int val = pixelData[seed + i];
-        unsigned int resultado = desplazarBitsIzq(val, bits) + mascara[i];
-        if (resultado != referencia[i]) return false;
-    }
-    return true;
-}
-
-bool verificarTransformacionDer(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                                int seed, int size, int bits) {
-    for (int i = 0; i < size; ++i) {
-        unsigned int val = pixelData[seed + i];
-        unsigned int resultado = desplazarBitsDer(val, bits) + mascara[i];
-        if (resultado != referencia[i]) return false;
-    }
-    return true;
-}
-
-
-bool verificarXoR(unsigned char* IM_danada, unsigned char* mascara, unsigned int* referencia,
-                  int seed, int size, unsigned char* IM_mascara) {
-    for (int i = 0; i < size; ++i) {
-        unsigned int valor1 = IM_danada[seed + i];
-        unsigned int valor2 = IM_mascara[seed + i];
-        unsigned int enmascaramiento = Xor(valor1, valor2) + mascara[i];
-        if (enmascaramiento != referencia[i]) return false;
-    }
-    return true;
-}
-
-bool verificarRotacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                          int seed, int size, int bits) {
-    for (int i = 0; i < size; ++i) {
-        unsigned int val = pixelData[seed + i];
-        unsigned int resultado = RotacionBitsIzq(val, bits);
-        if ((resultado + mascara[i]) != referencia[i]) return false;
-    }
-    return true;
-}
-bool verificarRotacionDer(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                          int seed, int size, int bits) {
-    for (int i = 0; i < size; ++i) {
-        unsigned int val = pixelData[seed + i];
-        unsigned int resultado = RotacionBitsDer(val, bits);
-        if ((resultado + mascara[i]) != referencia[i]) return false;
-    }
-    return true;
-}
 
 // ---------------------- FUNCION DE TRANSFORMACIÓN ----------------------
 void aplicarTransformacion(unsigned char* pixelData, unsigned short int modo,

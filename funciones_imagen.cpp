@@ -1,9 +1,11 @@
+
 #include <fstream>
 #include <iostream>
 #include "funciones_imagen.h"
 
+using namespace std;
 
-unsigned char* loadPixels(QString input, int &width, int &height){
+unsigned char* loadPixels(QString input,  int &width, int &height){
     /*
  * @brief Carga una imagen BMP desde un archivo y extrae los datos de píxeles en formato RGB.
  *
@@ -167,9 +169,12 @@ unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixel
     archivo.close();
 
     // Mostrar información de control en consola
-    cout << "Semilla: " << seed << endl;
-    cout << "Cantidad de píxeles leídos: " << n_pixels << endl;
+    //cout << "Semilla: " << seed << endl;
+    //cout << "Cantidad de píxeles leídos: " << n_pixels << endl;
 
     // Retornar el puntero al arreglo con los datos RGB
     return RGB;
 }
+
+
+
