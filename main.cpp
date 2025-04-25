@@ -9,18 +9,19 @@
 
 using namespace std;
 
-uint8_t desplazarBitsIzq(uint8_t valor, int bits);
-
-uint8_t desplazarBitsDer(uint8_t valor, int bits);
+unsigned int desplazarBitsIzq(unsigned int valor, int bits);
+unsigned int desplazarBitsDer(unsigned int valor, int bits);
+unsigned int Xor(unsigned int pixel1, unsigned int pixel2);
+QString nombreArchivoPaso(int paso);
 
 bool verificarTransformacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                                int seed, int size,  int argumento);
+                                int seed, int size, int bits);
 
 bool verificarTransformacionDer(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                                int seed, int size,  int argumento);
+                                int seed, int size, int bits);
 
-uint8_t Xor(uint8_t pixel1, uint8_t pixel2);
-
+bool verificarXoR(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
+                  int seed, int size, unsigned char* pixelData2);
 
 void aplicarTransformacion(unsigned char* pixelData,unsigned short int modo,unsigned short int bits =0,unsigned int tamanio_im = 0 );
 QString nombreArchivoPaso(int paso);
@@ -61,64 +62,47 @@ int main() {
         int n_pixels = 0;
         unsigned int* maskingData = loadSeedMasking(archivoPaso.toStdString().c_str(), seed, n_pixels);
         if (!maskingData) continue;
-
         int tamanioMascara = n_pixels * 3;
-        if (tamanioMascara > DimensionMascara) {
-            cerr << "La mascara es mas pequena que el bloque requerido por " << archivoPaso.toStdString() << endl;
-            delete[] maskingData;
-            continue;
-        }
 
         bool encontrado = false;
 
         for (int modo = 1; modo <= 5; ++modo) {
+
             // Tranformacion de Desplazamiento de 1 hasta 8 bits
-            for (unsigned short int bits = 1; bits <= 8; ++bits) {
-
-                if (modo == 1){
-                    cout<<endl<<"APlicacion de Dezplazamiento de " <<bits << " bits a la izquierda: "<<endl;
-                    if (verificarTransformacionIzq(
-                        pixelData, mascaraData, maskingData,
-                            seed, tamanioMascara, bits))
-                    {
-                        aplicarTransformacion(
-                            pixelData, seed, tamanioMascara, bits);
-
-
-                        encontrado = true;
-                        break;
-                    }
-
+            for (int bits = 1; bits <= 8; ++bits) {
+                if (verificarTransformacionIzq(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits)) {
+                    cout << "Transformacion encontrada: desplazamiento izquierda " << bits << " bits." << endl;
+                    encontrado = true;
+                    break;
                 }
 
-
-                if (modo == 2){
-                    cout<<endl<<"APlicacion de Dezplazamiento de " <<bits << "  bits a la izquierda: "<<endl;
-                    if (verificarTransformacionDer(
-                            pixelData, mascaraData, maskingData,
-                            seed, tamanioMascara, bits))
-                    {
-                        aplicarTransformacion(
-                            pixelData, seed, tamanioMascara, bits);
-
-                        encontrado = true;
-                        break;
-                    }
-
+                if (verificarTransformacionDer(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits)) {
+                    cout << "Transformacion encontrada: desplazamiento derecha " << bits << " bits." << endl;
+                    encontrado = true;
+                    break;
                 }
             }
-            //Transformacion de XoR
-            if (modo == 3){
-                cout<<endl<<"APlicacion de XoR: "<<endl;
+
+            if (!encontrado) {
+                int wi = 0, hi = 0;
+                unsigned char* pixelData_I_M = loadPixels("I_M.bmp", wi, hi);
+
+                if (verificarXoR(pixelData, mascaraData, maskingData, seed, tamanioMascara, pixelData_I_M)) {
+                    cout << "Transformacion encontrada: XOR con I_M.bmp" << endl;
+                    encontrado = true;
+                    aplicarTransformacion()
+                }
+
+                delete[] pixelData_I_M;
             }
 
             //Transformacion de Rotacion a la izquierda
-            if (modo == 4){
+            if (!encontrado){
                 cout<<endl<<"APlicacion de rotacion a la izquierda: "<<endl;
             }
 
             //Transformacion de Rotacion a la Derecha
-            if (modo == 5){
+            if (!encontrado){
                 cout<<endl<<"APlicacion de rotacion a la izquierda: "<<endl;
             }
 
@@ -137,13 +121,6 @@ int main() {
     delete[] pixelData;
     delete[] mascaraData;
 
-    cout << "\nTransformaciones aplicadas (orden inverso):" << endl;
-    for (int i = 0; i < totalTransformaciones; ++i) {
-        cout << "- " << transformaciones[i] << endl;
-        free(transformaciones[i]);
-    }
-    free(transformaciones);
-
 
 
     return 0;
@@ -153,16 +130,17 @@ int main() {
 
 // ---------------------- FUNCIONES DE TRANSFORMACION ----------------------
 
-uint8_t desplazarBitsIzq(uint8_t valor, int bits) {
+
+unsigned int desplazarBitsIzq(unsigned int valor, int bits) {
     return (valor << bits) & 0xFF;
 }
 
-uint8_t desplazarBitsDer(uint8_t valor, int bits) {
+unsigned int desplazarBitsDer(unsigned int valor, int bits) {
     return (valor >> bits);
 }
 
-uint8_t Xor(uint8_t pixel1, uint8_t pixel2){
-    return (pixel1 ^ pixel2);
+unsigned int Xor(unsigned int pixel1, unsigned int pixel2) {
+    return pixel1 ^ pixel2;
 }
 
 uint8_t RotacionBitsIzq(uint8_t valor) {
@@ -177,35 +155,39 @@ uint8_t RotacionBitsDer(uint8_t valor) {
 bool verificarTransformacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
                                 int seed, int size, int bits) {
     for (int i = 0; i < size; ++i) {
-        unsigned int identificador = seed + i;
-        //if (idx >= totalImageSize) return false;
-
-        uint8_t original = pixelData[identificador];
-        uint8_t transformado = desplazarBitsIzq(original, bits);
-        uint8_t enmascarado = (transformado + mascara[i]) & 0xFF;
-        cout<<endl<<enmascarado-'0' << " "<< referencia[i]<<endl;
-
-        if (enmascarado != referencia[i]) return false;
+        unsigned int val = pixelData[seed + i];
+        unsigned int resultado = desplazarBitsIzq(val, bits) + mascara[i];
+        if (resultado != referencia[i]) return false;
     }
     return true;
 }
 
 bool verificarTransformacionDer(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                                int seed, int size, int argumento) {
+                                int seed, int size, int bits) {
     for (int i = 0; i < size; ++i) {
-        int idx = seed + i;
-        uint8_t original = pixelData[idx];
-        uint8_t transformado = desplazarBitsDer(original, argumento);
-        uint8_t enmascarado = (transformado + mascara[i]) & 0xFF;
-        cout<<endl<<enmascarado-'0' << " "<< referencia[i]<<endl;
-
-        if (enmascarado != referencia[i]) return false;
+        unsigned int val = pixelData[seed + i];
+        unsigned int resultado = desplazarBitsDer(val, bits) + mascara[i];
+        if (resultado != referencia[i]) return false;
     }
     return true;
 }
 
-bool verificarXoR(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
-                                int seed, int size, int argumento) {
+bool verificarXoR(unsigned char* IM_danada, unsigned char* mascara, unsigned int* referencia,
+                  int seed, int size, unsigned char* IM_mascara) {
+    for (int i = 0; i < size; ++i) {
+        unsigned int valor1 = IM_danada[seed + i];
+        //cout <<endl<<"canal 1 : "<<valor1<<endl;
+        unsigned int valor2 = IM_mascara[seed + i];
+       // cout <<endl<<"canal 2 : "<<valor2<<endl;
+        //cout <<endl<<"Xor entre canales : "<<Xor(valor1, valor2)<<endl;
+        int x = mascara[i];
+        cout <<endl<<"Mascara : "<<x<<endl;
+
+        unsigned int enmascaramiento = Xor(valor1, valor2) + mascara[i];
+       // cout <<endl<<"Enmascaramiento : "<<enmascaramiento<<endl;
+        if (enmascaramiento != referencia[i]) return false;
+    }
+    return true;
 }
 
 bool verificarRotacionIzq(unsigned char* pixelData, unsigned char* mascara, unsigned int* referencia,
@@ -236,9 +218,9 @@ void aplicarTransformacion(unsigned char* pixelData,unsigned short int modo,unsi
     }
     if (modo == 3){
         for (unsigned int i = 0; i < tamanio_im; ++i) {
-            uint8_t Im_original = pixelData[i];
-            uint8_t Im_mascara = pixeldata2[i];
-            uint8_t transformado =  Xor(Im_original,Im_mascara );
+            unsigned int Im_original = pixelData[i];
+            unsigned int Im_mascara = pixeldata2[i];
+            unsigned int transformado =  Xor(Im_original,Im_mascara );
             pixelData[i] = transformado;
         }
     }
