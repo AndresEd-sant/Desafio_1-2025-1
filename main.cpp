@@ -12,11 +12,6 @@
 using namespace std;
 
 
-
-void aplicarTransformacion(unsigned char* pixelData, unsigned short int modo,
-                           unsigned short int bits, unsigned int tamanio_im,
-                           unsigned char* pixeldata2 = nullptr);
-
 QString nombreArchivoPaso(int paso);
 
 
@@ -54,8 +49,10 @@ int main() {
         int tamanioMascara = n_pixels * 3;
         bool encontrado = false;
 
-        for (int bits = 1; bits <= 8 && !encontrado; ++bits) {
-            if (verificarTransformacionIzq(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits)) {
+        for (unsigned short int bits = 1; bits <= 8 && !encontrado; ++bits) {
+
+            if (verificarTransformacionIzq(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits))
+            {
                 cout <<"Paso "<<pasosrec <<" :" <<"desplazamiento a la izquierda de "<< bits <<"bits\n";
                 pasosrec++;
                 aplicarTransformacion(pixelData, 1, bits, DimensionImagen);
@@ -100,7 +97,7 @@ int main() {
         }
 
         if (!encontrado)
-            cout << "Ninguna transformacion valida para " << archivoPaso.toStdString() << endl;
+            cout << "Ninguna transformacion a nivel de bits valida para " << archivoPaso.toStdString() << endl;
 
         delete[] maskingData;
     }
@@ -110,37 +107,9 @@ int main() {
     delete[] pixelData;
     delete[] mascaraData;
 
-
-
     return 0;
 }
 
-
-// ---------------------- FUNCION DE TRANSFORMACIÓN ----------------------
-void aplicarTransformacion(unsigned char* pixelData, unsigned short int modo,
-                           unsigned short int bits, unsigned int tamanio_im,
-                           unsigned char* pixeldata2) {
-    for (unsigned int i = 0; i < tamanio_im; ++i) {
-        unsigned int original = pixelData[i];
-        unsigned int transformado = 0;
-        if (modo == 1) {
-            transformado = desplazarBitsIzq(original, bits);
-        }
-        else if (modo == 2){
-            transformado = desplazarBitsDer(original, bits);
-        }
-        else if (modo == 3){
-            transformado = Xor(original, pixeldata2[i]);
-        }
-        else if (modo == 4){
-            transformado = RotacionBitsIzq(original, bits);
-        }
-        else if (modo == 5){
-            transformado = RotacionBitsDer(original, bits);
-        }
-        pixelData[i] = transformado;
-    }
-}
 
 QString nombreArchivoPaso(int paso) {
     return QString("M%1.txt").arg(paso);
