@@ -7,7 +7,7 @@
 #include <cstring>
 #include "funciones_imagen.h"
 #include "funciones_de_transformacion.h"
-#include "funciones_de_verificacion.h"
+#include "Funciones_de_verificacion.h"
 
 using namespace std;
 
@@ -30,7 +30,7 @@ int main() {
 
     unsigned int DimensionImagen = width_img * height_img * 3;
 
-    int pasos = 0;
+    unsigned int pasos = 0;
     cout << "Ingrese el numero total de archivos Mx.txt: ";
     cin >> pasos;
     unsigned short int pasosrec =1;
@@ -51,13 +51,13 @@ int main() {
 
         for (unsigned short int bits = 1; bits <= 8 && !encontrado; ++bits) {
 
-            if (verificarTransformacionIzq(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits))
+            if (verificarDesplazamientoIzq(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits))
             {
                 cout <<"Paso "<<pasosrec <<" :" <<"desplazamiento a la izquierda de "<< bits <<"bits\n";
                 pasosrec++;
                 aplicarTransformacion(pixelData, 1, bits, DimensionImagen);
                 encontrado = true;
-            } else if (verificarTransformacionDer(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits)) {
+            } else if (verificarDesplazamientoDer(pixelData, mascaraData, maskingData, seed, tamanioMascara, bits)) {
                 cout <<"Paso "<<pasosrec <<" :" <<"desplazamiento a la derecha de "<< bits <<"bits\n";
                 pasosrec++;
                 aplicarTransformacion(pixelData, 2, bits, DimensionImagen);
